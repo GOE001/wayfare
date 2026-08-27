@@ -270,6 +270,9 @@ func TestCostBlockJSONShape(t *testing.T) {
 
 	for _, idx := range []int{1, 2, 3} {
 		p := parts[idx]
+		if got := componentOf(t, p); got == string(CostFXLoss) {
+			t.Fatalf("parts[%d].component = %q, want a non-fx component", idx, got)
+		}
 		assertUndetermined(t, p)
 	}
 }
