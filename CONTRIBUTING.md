@@ -8,6 +8,12 @@ Contributions are welcome. This document covers what the project will and
 will not accept, because the constraints here are unusual and worth knowing
 before you write code.
 
+**Questions first?** The [contributor FAQ](docs/contributor-faq.md) answers the
+ones that come up most, and
+[Discussions → Q&A](https://github.com/Wayfare-labs/wayfare/discussions/categories/q-a)
+is where to ask the rest. If a question keeps recurring, it belongs in the FAQ —
+a PR adding it is welcome.
+
 ## Getting set up
 
 ```bash
@@ -18,6 +24,13 @@ make test
 
 Go 1.22 or later. Dependencies are `shopspring/decimal` and `BurntSushi/toml`.
 
+For a fuller on-ramp — from the clone above to verifying the recorded data and
+reproducing a published figure — follow **[docs/first-15-minutes.md](docs/first-15-minutes.md)**.
+When a command's output does not behave, **[docs/troubleshooting.md](docs/troubleshooting.md)**
+covers the four stumbles people actually hit. The complete register of what
+this project refuses to build, and why, is
+**[docs/non-goals.md](docs/non-goals.md)**.
+
 Useful targets:
 
 ```bash
@@ -26,11 +39,15 @@ make test     # tests
 make race     # tests with the race detector
 make cover    # coverage report -> coverage.html
 make lint     # golangci-lint
+make offline-test # tests inside an isolated network namespace (see docs/offline-testing.md)
 make run      # measure USDC -> NGNC against live mainnet
 ```
 
 `make lint` needs [golangci-lint](https://golangci-lint.run/welcome/install/)
 installed separately.
+
+What each target actually runs, what it needs installed, and how the loop maps
+onto what CI does: **[docs/development-loop.md](docs/development-loop.md)**.
 
 ## Invariants
 
@@ -50,7 +67,9 @@ recommends nothing.
 **Never display a rate that did not come from a live source.** No estimates,
 no interpolation, no cached figures presented as current, no fallback to a
 plausible-looking constant. If a rate cannot be fetched, the correct output is
-an error, not a guess.
+an error, not a guess. What that looks like when it happens locally, and how to
+tell which upstream refused:
+**[docs/live-measurement-failures.md](docs/live-measurement-failures.md)**.
 
 **`decimal.Decimal` for all money. No `float64` in any pricing path.** Binary
 floating point cannot represent decimal fractions exactly, and rounding drift
@@ -64,6 +83,10 @@ fetch. That fact is reported. It is never filled in with a plausible number.
 ## Measurement discipline
 
 The project's claims are all reproducible measurements, so:
+
+**Breadth follows evidence.** A corridor, metric, or score is added only when
+its underlying observation can be reproduced, evidenced, and evaluated under
+the project's measurement contract.
 
 **Verify against live sources; do not encode remembered values.** Issuer
 accounts are read from the issuer's own `stellar.toml` per SEP-1, not from a
@@ -97,6 +120,10 @@ measurements rather than breaking a feature:
 are exactly the contribution this project wants — see
 [docs/checks.md](docs/checks.md) and the issues labelled `good first issue`.
 
+The per-area reasoning — exactly what is owned, what a mistake in it would
+publish, what defends it today, and what is open contribution — is
+**[docs/maintainer-owned-areas.md](docs/maintainer-owned-areas.md)**.
+
 ### What the labels mean
 
 Contributors have to be able to trust these:
@@ -121,11 +148,19 @@ Contributors have to be able to trust these:
 ## Before opening a pull request
 
 ```bash
-make fmt vet test race lint
+make fmt vet test race lint offline-test
 ```
 
-CI runs `gofmt`, `go vet`, `go test -race`, `go build`, and `golangci-lint`.
-All must pass.
+CI runs `gofmt`, `go vet`, `go test -race`, `go build`, `golangci-lint`, and
+`offline-tests` (running the full test suite in an isolated network blackout
+namespace). All must pass without outbound network access. See
+[docs/offline-testing.md](docs/offline-testing.md); for the loop itself, and
+what each target needs installed, [docs/development-loop.md](docs/development-loop.md).
+
+Changes to `server/index.html` are only covered by the source-text assertions in
+`go test`, which cannot tell you how a panel renders. Check them in a browser:
+[docs/qa/README.md](docs/qa/README.md) is a harness that drives the real binary in
+Chromium, Firefox and WebKit and records what it saw.
 
 In the pull request, describe what changed and why. If it touches pricing,
 say how you verified correctness — and if you measured something live,

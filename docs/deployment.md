@@ -213,9 +213,12 @@ put a secret into the deployment, and this service holds none.
 | `-serve` | | `true` | Serve HTTP; `false` runs the scheduler alone |
 | `-timeout` | | `90s` | Per-corridor measurement timeout |
 | `-verify-store` | | | Walk every chain and exit |
+| `-rotate-store` | | | Trim every chain over the window ceiling and exit |
+| `-rotate-records` | | `366` | Per-corridor record ceiling for `-rotate-store` |
 | `-log-level` | `WAYFARE_LOG_LEVEL` | `info` | `debug`, `info`, `warn`, `error` |
 
-No secrets. Nothing to rotate.
+No secrets. No credentials to rotate — the store rotates itself, trimming chains
+over the window ceiling; see [run-store.md](run-store.md#rotating-a-chain).
 
 **A store that fails to open is fatal.** On a deployment with a volume
 attached, that means the volume did not mount, and running anyway would record
@@ -246,7 +249,11 @@ and one asserting a missing one is an error rather than a plausible number.
 
 ## Related
 
+- [cold-start-reliability.md](cold-start-reliability.md) — observed free-tier
+    wake-up behavior and current retry boundary
+- [embedded-history.md](embedded-history.md) — the deployed instance serves history embedded at build time; freshness depends on redeploys, not the scheduler
 - [upstream-failures.md](upstream-failures.md) — what each upstream failure shape means
 - [run-store.md](run-store.md) — the chain, and what verification proves
+- [verify-store.md](verify-store.md) — running `-verify-store`, exit codes, and what broken chains look like
 - [snapshot-format.md](snapshot-format.md) — recorded upstream bytes
 - [CONTRIBUTING.md](../CONTRIBUTING.md) — project invariants
